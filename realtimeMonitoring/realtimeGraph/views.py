@@ -39,6 +39,7 @@ from .models import (
 from realtimeMonitoring import settings
 import dateutil.relativedelta
 from django.db.models import Avg, Max, Min, Sum
+from django.core import serializers
 
 
 class DashboardView(TemplateView):
@@ -677,6 +678,22 @@ class RemaView(TemplateView):
 
         return context
 
+def get_locations_by_user_json(request, **kwargs):
+
+    username = kwargs.get("user", None)
+    user = User.objects.get(login=username)
+    
+    # Obtener todas las estaciones asociadas al usuario
+    user_stations = Station.objects.filter(user=user)
+
+    # Obtener todas las ubicaciones asociadas a esas estaciones
+    user_locations = Location.objects.filter(station__in=user_stations)
+
+    # Serializar las ubicaciones en formato JSON
+    locations_json = serializers.serialize('json', user_locations)
+
+    # Devolver el JSON como respuesta
+    return JsonResponse(locations_json, safe=False)
 
 def download_csv_data(request):
     print("Getting time for csv req")
