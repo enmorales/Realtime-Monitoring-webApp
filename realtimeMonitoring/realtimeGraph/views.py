@@ -9,6 +9,7 @@ from typing import Dict
 import requests
 import uuid
 import tempfile
+from django.core import serializers
 
 from django.template.defaulttags import register
 from django.contrib.auth import login, logout
@@ -584,6 +585,23 @@ def get_map_json(request, **kwargs):
     data_result["data"] = data
 
     return JsonResponse(data_result)
+
+def get_locations_by_user_json(request, **kwargs):
+
+    username = kwargs.get("user", None)
+    user = User.objects.get(login=username)
+    
+    # Obtener todas las estaciones asociadas al usuario
+    user_stations = Station.objects.filter(user=user)
+
+    # Obtener todas las ubicaciones asociadas a esas estaciones
+    user_locations = Location.objects.filter(station__in=user_stations)
+
+    # Serializar las ubicaciones en formato JSON
+    locations_json = serializers.serialize('json', user_locations)
+
+    # Devolver el JSON como respuesta
+    return JsonResponse(locations_json, safe=False)
 
 
 def download_csv_data(request):
